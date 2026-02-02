@@ -1,11 +1,11 @@
 {
-  "name": "docsrs-mcp",
+  "name": "rs-docsrs-mcp",
   "version": "0.2.0",
   "description": "Model Context Protocol (MCP) server for docs.rs - Search and fetch Rust crate documentation",
   "type": "module",
   "main": "src/index.js",
   "bin": {
-    "docsrs-mcp": "src/index.js"
+    "rs-docsrs-mcp": "src/index.js"
   },
   "files": [
     "src/**/*.js",
@@ -27,16 +27,16 @@
     "llm",
     "claude"
   ],
-  "author": "",
+  "author": "ZhenYi <zheyqaq@gmail.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/lazhenyi/rs-docsrs-mcp"
   },
   "bugs": {
-    "url": ""
+    "url": "https://github.com/lazhenyi/rs-docsrs-mcp/issues"
   },
-  "homepage": "",
+  "homepage": "https://github.com/lazhenyi/rs-docsrs-mcp",
   "engines": {
     "node": ">=18.0.0"
   },
