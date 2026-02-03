@@ -18,7 +18,8 @@ import {
 const server = new Server(
   {
     name: "docsrs-mcp",
-    version: "0.3.0"
+    version: "0.3.1",
+    description: "MCP server for docs.rs - Search and fetch Rust crate documentation"
   },
   {
     capabilities: {
@@ -226,5 +227,14 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
   }
 });
 
-const transport = new StdioServerTransport();
-await server.connect(transport);
+// Start the server with error handling
+async function runServer() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error("Docs.rs MCP server running on stdio");
+}
+
+runServer().catch((error) => {
+  console.error("Fatal error in main():", error);
+  process.exit(1);
+});
