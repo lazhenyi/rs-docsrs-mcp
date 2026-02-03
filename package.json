@@ -1,6 +1,6 @@
 {
   "name": "rs-docsrs-mcp",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Model Context Protocol (MCP) server for docs.rs - Search and fetch Rust crate documentation",
   "type": "module",
   "main": "src/index.js",
