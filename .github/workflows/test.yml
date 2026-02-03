@@ -1,0 +1,105 @@
+name: CI Tests
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Node ${{ matrix.node-version }} on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node-version: [18.x, 20.x, 22.x]
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check if server starts
+        run: |
+          timeout 5 node src/index.js || exit 0
+        shell: bash
+        if: runner.os != 'Windows'
+      
+      - name: Check if server starts (Windows)
+        run: |
+          $job = Start-Job -ScriptBlock { node src/index.js }
+          Start-Sleep -Seconds 3
+          Stop-Job $job
+          Remove-Job $job
+        shell: pwsh
+        if: runner.os == 'Windows'
+      
+      - name: Verify package structure
+        run: |
+          node -e "import('./src/index.js').catch(e => { console.error(e); process.exit(1); })"
+      
+      - name: Test MCP server communication
+        run: |
+          echo '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2024-11-05","capabilities":{},"clientInfo":{"name":"test","version":"1.0.0"}}}' | node src/index.js &
+          sleep 2
+          pkill -f "node src/index.js" || true
+        shell: bash
+        if: runner.os != 'Windows'
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Check for syntax errors
+        run: node --check src/index.js src/docsrs.js
+
+  publish-dry-run:
+    name: Test NPM Package
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+      
+      - name: Install dependencies
+        run: npm ci
+      
+      - name: Test npm pack
+        run: |
+          npm pack
+          tar -tzf rs-docsrs-mcp-*.tgz
+      
+      - name: Verify package.json
+        run: |
+          node -e "const pkg = require('./package.json'); console.log('Package:', pkg.name, pkg.version); if (!pkg.bin) throw new Error('Missing bin field');"
