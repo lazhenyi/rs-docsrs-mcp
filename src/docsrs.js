@@ -39,20 +39,25 @@ export async function searchCrates(query) {
 
   const results = [];
 
-  $("li.release").each((_, el) => {
-    const link = $(el).find(".release-name a").first();
+  // New structure: li > a.release
+  $("li > a.release").each((_, el) => {
+    const $link = $(el);
+    const href = $link.attr("href");
 
-    const name = link.text().trim();
-    const href = link.attr("href");
+    // Name and version are in .name div like "tokio-1.49.0"
+    const nameText = $link.find(".name").first().text().trim();
+    const description = $link.find(".description").first().text().trim();
 
-    const version = $(el).find(".version").first().text().trim();
-    const description = $(el).find(".description").first().text().trim();
+    if (!nameText || !href) return;
 
-    if (!name || !href) return;
+    // Split "tokio-1.49.0" into name and version
+    const lastDash = nameText.lastIndexOf("-");
+    const name = lastDash > 0 ? nameText.substring(0, lastDash) : nameText;
+    const version = lastDash > 0 ? nameText.substring(lastDash + 1) : null;
 
     results.push({
       name,
-      version: version || null,
+      version,
       description: description || null,
       docs_url: "https://docs.rs" + href
     });
@@ -174,45 +179,57 @@ export async function listCrateModules(crate, version = "latest") {
   const traits = [];
   const macros = [];
 
-  // Parse modules
-  $("#modules + .item-table .item-name, #modules + .item-table-wrap .item-name").each((_, el) => {
-    const name = $(el).find("a.mod").text().trim();
-    const desc = $(el).closest("tr, .item-table").find(".desc, .desc-docblock").first().text().trim();
+  // Parse modules - using dl.item-table dt/dd structure
+  $("#modules + dl.item-table > dt").each((_, el) => {
+    const $dt = $(el);
+    const name = $dt.find("a.mod").text().trim();
+    const $dd = $dt.next("dd");
+    const desc = $dd.text().trim();
     if (name) modules.push({ name, description: desc || null });
   });
 
   // Parse structs
-  $("#structs + .item-table .item-name, #structs + .item-table-wrap .item-name").each((_, el) => {
-    const name = $(el).find("a.struct").text().trim();
-    const desc = $(el).closest("tr, .item-table").find(".desc, .desc-docblock").first().text().trim();
+  $("#structs + dl.item-table > dt").each((_, el) => {
+    const $dt = $(el);
+    const name = $dt.find("a.struct").text().trim();
+    const $dd = $dt.next("dd");
+    const desc = $dd.text().trim();
     if (name) structs.push({ name, description: desc || null });
   });
 
   // Parse enums
-  $("#enums + .item-table .item-name, #enums + .item-table-wrap .item-name").each((_, el) => {
-    const name = $(el).find("a.enum").text().trim();
-    const desc = $(el).closest("tr, .item-table").find(".desc, .desc-docblock").first().text().trim();
+  $("#enums + dl.item-table > dt").each((_, el) => {
+    const $dt = $(el);
+    const name = $dt.find("a.enum").text().trim();
+    const $dd = $dt.next("dd");
+    const desc = $dd.text().trim();
     if (name) enums.push({ name, description: desc || null });
   });
 
   // Parse functions
-  $("#functions + .item-table .item-name, #functions + .item-table-wrap .item-name").each((_, el) => {
-    const name = $(el).find("a.fn").text().trim();
-    const desc = $(el).closest("tr, .item-table").find(".desc, .desc-docblock").first().text().trim();
+  $("#functions + dl.item-table > dt").each((_, el) => {
+    const $dt = $(el);
+    const name = $dt.find("a.fn").text().trim();
+    const $dd = $dt.next("dd");
+    const desc = $dd.text().trim();
     if (name) functions.push({ name, description: desc || null });
   });
 
   // Parse traits
-  $("#traits + .item-table .item-name, #traits + .item-table-wrap .item-name").each((_, el) => {
-    const name = $(el).find("a.trait").text().trim();
-    const desc = $(el).closest("tr, .item-table").find(".desc, .desc-docblock").first().text().trim();
+  $("#traits + dl.item-table > dt").each((_, el) => {
+    const $dt = $(el);
+    const name = $dt.find("a.trait").text().trim();
+    const $dd = $dt.next("dd");
+    const desc = $dd.text().trim();
     if (name) traits.push({ name, description: desc || null });
   });
 
   // Parse macros
-  $("#macros + .item-table .item-name, #macros + .item-table-wrap .item-name").each((_, el) => {
-    const name = $(el).find("a.macro").text().trim();
-    const desc = $(el).closest("tr, .item-table").find(".desc, .desc-docblock").first().text().trim();
+  $("#macros + dl.item-table > dt").each((_, el) => {
+    const $dt = $(el);
+    const name = $dt.find("a.macro").text().trim();
+    const $dd = $dt.next("dd");
+    const desc = $dd.text().trim();
     if (name) macros.push({ name, description: desc || null });
   });
 
@@ -237,22 +254,55 @@ export async function fetchCrateReadme(crate, version = "latest") {
   const html = await fetchWithTimeout(url);
   const $ = cheerio.load(html);
 
-  // Try to get README content
-  const readmeContent = $(".readme, .pure-u-14-24").first().text().trim();
+  // Extract README content - it's in the main container div
+  let readmeContent = "";
+  
+  // Remove script and style tags first
+  $("script, style").remove();
+  
+  // The README is in .container > .rustdoc or just the main content area
+  const mainContent = $(".container .rustdoc, .container > .pure-g, main").first();
+  
+  if (mainContent.length) {
+    // Get text content, removing navigation and header elements
+    const tempDiv = mainContent.clone();
+    tempDiv.find("nav, .nav-container, .pure-menu, header").remove();
+    readmeContent = tempDiv.text().trim();
+  }
+  
+  // If still empty, try alternative selectors
+  if (!readmeContent) {
+    readmeContent = $(".readme, .pure-u-14-24").first().text().trim();
+  }
   
   // Get crate metadata
   const metadata = {};
-  $(".pure-u-10-24 p").each((_, el) => {
-    const text = $(el).text().trim();
-    if (text.includes("Repository:")) {
-      const link = $(el).find("a").attr("href");
-      if (link) metadata.repository = link;
-    }
-    if (text.includes("Documentation:")) {
-      const link = $(el).find("a").attr("href");
-      if (link) metadata.documentation = link;
+  
+  // Look for repository link
+  $("a[href*='github.com'], a[href*='gitlab.com'], a[href*='bitbucket.org']").each((_, el) => {
+    const href = $(el).attr("href");
+    if (href && !metadata.repository && !href.includes('/tokio-rs/tokio/')) {
+      // Prefer the first repo link that looks like a source repository
+      if (href.match(/github\.com\/[\w-]+\/[\w-]+\/?$/)) {
+        metadata.repository = href;
+        return false; // break
+      }
     }
   });
+  
+  // Fallback for common repo patterns
+  if (!metadata.repository) {
+    $("a[href*='github.com']").first().each((_, el) => {
+      const href = $(el).attr("href");
+      if (href) metadata.repository = href;
+    });
+  }
+  
+  // Get documentation link
+  const docsLink = $(`a[href*='docs.rs/${crate}']`).first().attr("href");
+  if (docsLink) {
+    metadata.documentation = docsLink.startsWith('http') ? docsLink : 'https://docs.rs' + docsLink;
+  }
 
   return {
     crate,

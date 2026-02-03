@@ -16,7 +16,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, windows-latest, macos-latest]
-        node-version: [18.x, 20.x, 22.x]
+        node-version: [20.x, 22.x, 24.x]
     
     steps:
       - name: Checkout code
@@ -49,6 +49,10 @@ jobs:
       - name: Verify package structure
         run: |
           node -e "import('./src/index.js').catch(e => { console.error(e); process.exit(1); })"
+      
+      - name: Run Tokio integration tests
+        run: node test/test-tokio.js
+        timeout-minutes: 2
       
       - name: Test MCP server communication
         run: |
