@@ -33,7 +33,7 @@ import {
 const server = new Server(
   {
     name: "docsrs-mcp",
-    version: "0.3.3",
+    version: "0.4.0",
     description: "MCP server for docs.rs - Search and fetch Rust crate documentation"
   },
   {
