@@ -13,6 +13,21 @@ A Model Context Protocol (MCP) server for [docs.rs](https://docs.rs) - enabling 
 - 📚 **Documentation Access**: Fetch documentation for specific modules, structs, functions, and more
 - 📑 **Module Listing**: List all modules, structs, enums, functions, traits, and macros in a crate
 - 📖 **README Access**: Retrieve crate README and metadata
+- 📋 **Version History**: List all available versions of a crate
+- 🔄 **Reverse Dependencies**: Find which crates depend on a specific crate
+- 📊 **Download Stats**: Get download statistics from crates.io
+- 🎯 **Item Search**: Search for specific item types within a crate
+- 🔗 **Source Links**: Get repository and source code links
+- ⚙️ **Feature Discovery**: Find crate features and configuration options
+- 📦 **Direct Dependencies**: Get all dependencies of a crate
+- 👥 **Crate Owners**: Get crate maintainers and owners
+- 🦀 **Rustdoc Search**: Search across all crates for a symbol or type
+- 📅 **Release History**: Get crate release history with dates
+- 🔍 **Trait Implementations**: Find all implementations of a trait
+- 💻 **Source Code**: View source code for any item
+- 🏷️ **Keywords/Categories**: Get crate keywords and categories
+- 📄 **License Info**: Get crate license information
+- ⚖️ **Version Comparison**: Compare items between two versions
 
 ## Installation
 
@@ -154,6 +169,265 @@ Get README and metadata for a crate.
   "crate": "tokio"
 }
 ```
+
+### 6. `docs_rs_list_versions`
+
+List all available versions of a crate.
+
+**Parameters:**
+- `crate` (string, required): Crate name
+
+**Example:**
+```json
+{
+  "crate": "tokio"
+}
+```
+
+**Returns:**
+- `versions`: Array of version strings (sorted descending)
+- `latest_url`: URL to the latest version docs
+
+### 7. `docs_rs_get_reverse_deps`
+
+Get reverse dependencies (which crates depend on this crate).
+
+**Parameters:**
+- `crate` (string, required): Crate name
+
+**Example:**
+```json
+{
+  "crate": "tokio"
+}
+```
+
+### 8. `docs_rs_get_downloads`
+
+Get download statistics for a crate from crates.io.
+
+**Parameters:**
+- `crate` (string, required): Crate name
+
+**Example:**
+```json
+{
+  "crate": "tokio"
+}
+```
+
+**Returns:**
+- `downloads`: Object with `all` (total) and `recent` download counts
+- `latest_version`: Latest version number
+- `created_at`, `updated_at`: Timestamps
+
+### 9. `docs_rs_search_items`
+
+Search for specific item types within a crate.
+
+**Parameters:**
+- `crate` (string, required): Crate name
+- `version` (string, optional): Version (default: "latest")
+- `item_type` (string, optional): Item type to filter by (mod, struct, enum, fn, trait, macro, type, constant)
+
+**Example:**
+```json
+{
+  "crate": "tokio",
+  "item_type": "trait"
+}
+```
+
+**Returns:**
+- `items`: Array of items with name, kind, description, and path
+
+### 10. `docs_rs_get_source_link`
+
+Get source code link and repository information for a crate.
+
+**Parameters:**
+- `crate` (string, required): Crate name
+- `version` (string, optional): Version (default: "latest")
+
+**Example:**
+```json
+{
+  "crate": "serde"
+}
+```
+
+**Returns:**
+- `repository`: GitHub/GitLab repository URL
+- `source_url`: Direct source code link
+- `download_url`: Crate download URL
+
+### 11. `docs_rs_get_features`
+
+Get crate features and configuration options.
+
+**Parameters:**
+- `crate` (string, required): Crate name
+- `version` (string, optional): Version (default: "latest")
+
+**Example:**
+```json
+{
+  "crate": "tokio",
+  "version": "1.35.0"
+}
+```
+
+**Returns:**
+- `features`: Array of feature names
+- `has_features`: Boolean indicating if features were found
+
+### 12. `docs_rs_get_dependencies`
+
+Get direct dependencies of a crate.
+
+**Parameters:**
+- `crate` (string, required): Crate name
+- `version` (string, optional): Version (default: "latest")
+
+**Example:**
+```json
+{
+  "crate": "tokio",
+  "version": "1.35.0"
+}
+```
+
+### 13. `docs_rs_get_owners`
+
+Get crate owners and maintainers from crates.io.
+
+**Parameters:**
+- `crate` (string, required): Crate name
+
+**Example:**
+```json
+{
+  "crate": "serde"
+}
+```
+
+### 14. `docs_rs_search_rustdoc`
+
+Search rustdoc across crates for a symbol or type.
+
+**Parameters:**
+- `query` (string, required): Search query for symbol or type
+- `limit` (number, optional): Maximum results (default: 10)
+
+**Example:**
+```json
+{
+  "query": "Runtime",
+  "limit": 5
+}
+```
+
+### 15. `docs_rs_get_releases`
+
+Get crate release history with dates.
+
+**Parameters:**
+- `crate` (string, required): Crate name
+- `limit` (number, optional): Maximum releases (default: 20)
+
+**Example:**
+```json
+{
+  "crate": "tokio",
+  "limit": 10
+}
+```
+
+### 16. `docs_rs_get_trait_impls`
+
+Find all implementations of a trait in a crate.
+
+**Parameters:**
+- `crate` (string, required): Crate name
+- `trait_name` (string, optional): Name of the trait to search for
+- `version` (string, optional): Version (default: "latest")
+
+**Example:**
+```json
+{
+  "crate": "tokio",
+  "trait_name": "Future"
+}
+```
+
+### 17. `docs_rs_get_source_code`
+
+Get source code for a specific item.
+
+**Parameters:**
+- `crate` (string, required): Crate name
+- `version` (string, optional): Version (default: "latest")
+- `path` (string, required): Documentation path to the item
+
+**Example:**
+```json
+{
+  "crate": "serde",
+  "version": "latest",
+  "path": "serde/ser/trait.Serialize.html"
+}
+```
+
+### 18. `docs_rs_get_keywords`
+
+Get crate keywords and categories from crates.io.
+
+**Parameters:**
+- `crate` (string, required): Crate name
+
+**Example:**
+```json
+{
+  "crate": "actix-web"
+}
+```
+
+### 19. `docs_rs_get_license`
+
+Get crate license information.
+
+**Parameters:**
+- `crate` (string, required): Crate name
+
+**Example:**
+```json
+{
+  "crate": "tokio"
+}
+```
+
+### 20. `docs_rs_compare_versions`
+
+Compare two versions of a crate.
+
+**Parameters:**
+- `crate` (string, required): Crate name
+- `version1` (string, required): First version to compare
+- `version2` (string, required): Second version to compare
+
+**Example:**
+```json
+{
+  "crate": "tokio",
+  "version1": "1.30.0",
+  "version2": "1.35.0"
+}
+```
+
+**Returns:**
+- `version1_items`: Item counts for version 1
+- `version2_items`: Item counts for version 2
+- `comparison`: Diff for each item type
 
 ## Example Queries
 

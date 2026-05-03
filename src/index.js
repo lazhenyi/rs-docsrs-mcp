@@ -12,7 +12,22 @@ import {
   fetchCrateHome,
   fetchCrateDoc,
   listCrateModules,
-  fetchCrateReadme
+  fetchCrateReadme,
+  listCrateVersions,
+  getReverseDependencies,
+  getCrateDownloads,
+  searchCrateItems,
+  getCrateSourceLink,
+  getCrateFeatures,
+  getCrateDependencies,
+  getCrateOwners,
+  searchRustDoc,
+  getCrateReleases,
+  getTraitImplementations,
+  getItemSourceCode,
+  getCrateKeywords,
+  getCrateLicense,
+  compareCrateVersions
 } from "./docsrs.js";
 
 const server = new Server(
@@ -131,6 +146,298 @@ server.setRequestHandler(ListToolsRequestSchema, async () => {
           required: ["crate"],
           additionalProperties: false
         }
+      },
+      {
+        name: "docs_rs_list_versions",
+        description: "List all available versions of a crate",
+        inputSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            crate: {
+              type: "string",
+              description: "The crate name"
+            }
+          },
+          required: ["crate"],
+          additionalProperties: false
+        }
+      },
+      {
+        name: "docs_rs_get_reverse_deps",
+        description: "Get reverse dependencies (which crates depend on this crate)",
+        inputSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            crate: {
+              type: "string",
+              description: "The crate name"
+            }
+          },
+          required: ["crate"],
+          additionalProperties: false
+        }
+      },
+      {
+        name: "docs_rs_get_downloads",
+        description: "Get download statistics for a crate from crates.io",
+        inputSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            crate: {
+              type: "string",
+              description: "The crate name"
+            }
+          },
+          required: ["crate"],
+          additionalProperties: false
+        }
+      },
+      {
+        name: "docs_rs_search_items",
+        description: "Search for specific item types (traits, structs, functions, etc.) within a crate",
+        inputSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            crate: {
+              type: "string",
+              description: "The crate name"
+            },
+            version: {
+              type: "string",
+              description: "Crate version (default: 'latest')"
+            },
+            item_type: {
+              type: "string",
+              description: "Item type to search for: mod, struct, enum, fn, trait, macro, type, constant"
+            }
+          },
+          required: ["crate"],
+          additionalProperties: false
+        }
+      },
+      {
+        name: "docs_rs_get_source_link",
+        description: "Get source code link and repository information for a crate",
+        inputSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            crate: {
+              type: "string",
+              description: "The crate name"
+            },
+            version: {
+              type: "string",
+              description: "Crate version (default: 'latest')"
+            }
+          },
+          required: ["crate"],
+          additionalProperties: false
+        }
+      },
+      {
+        name: "docs_rs_get_features",
+        description: "Get crate features and configuration options",
+        inputSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            crate: {
+              type: "string",
+              description: "The crate name"
+            },
+            version: {
+              type: "string",
+              description: "Crate version (default: 'latest')"
+            }
+          },
+          required: ["crate"],
+          additionalProperties: false
+        }
+      },
+      {
+        name: "docs_rs_get_dependencies",
+        description: "Get direct dependencies of a crate",
+        inputSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            crate: {
+              type: "string",
+              description: "The crate name"
+            },
+            version: {
+              type: "string",
+              description: "Crate version (default: 'latest')"
+            }
+          },
+          required: ["crate"],
+          additionalProperties: false
+        }
+      },
+      {
+        name: "docs_rs_get_owners",
+        description: "Get crate owners and maintainers from crates.io",
+        inputSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            crate: {
+              type: "string",
+              description: "The crate name"
+            }
+          },
+          required: ["crate"],
+          additionalProperties: false
+        }
+      },
+      {
+        name: "docs_rs_search_rustdoc",
+        description: "Search rustdoc across crates for a symbol or type",
+        inputSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            query: {
+              type: "string",
+              description: "Search query for symbol or type"
+            },
+            limit: {
+              type: "number",
+              description: "Maximum results (default: 10)"
+            }
+          },
+          required: ["query"],
+          additionalProperties: false
+        }
+      },
+      {
+        name: "docs_rs_get_releases",
+        description: "Get crate release history with dates",
+        inputSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            crate: {
+              type: "string",
+              description: "The crate name"
+            },
+            limit: {
+              type: "number",
+              description: "Maximum releases to return (default: 20)"
+            }
+          },
+          required: ["crate"],
+          additionalProperties: false
+        }
+      },
+      {
+        name: "docs_rs_get_trait_impls",
+        description: "Find all implementations of a trait in a crate",
+        inputSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            crate: {
+              type: "string",
+              description: "The crate name"
+            },
+            trait_name: {
+              type: "string",
+              description: "Name of the trait to search for"
+            },
+            version: {
+              type: "string",
+              description: "Crate version (default: 'latest')"
+            }
+          },
+          required: ["crate"],
+          additionalProperties: false
+        }
+      },
+      {
+        name: "docs_rs_get_source_code",
+        description: "Get source code for a specific item",
+        inputSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            crate: {
+              type: "string",
+              description: "The crate name"
+            },
+            version: {
+              type: "string",
+              description: "Crate version (default: 'latest')"
+            },
+            path: {
+              type: "string",
+              description: "Documentation path to the item"
+            }
+          },
+          required: ["crate", "path"],
+          additionalProperties: false
+        }
+      },
+      {
+        name: "docs_rs_get_keywords",
+        description: "Get crate keywords and categories from crates.io",
+        inputSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            crate: {
+              type: "string",
+              description: "The crate name"
+            }
+          },
+          required: ["crate"],
+          additionalProperties: false
+        }
+      },
+      {
+        name: "docs_rs_get_license",
+        description: "Get crate license information",
+        inputSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            crate: {
+              type: "string",
+              description: "The crate name"
+            }
+          },
+          required: ["crate"],
+          additionalProperties: false
+        }
+      },
+      {
+        name: "docs_rs_compare_versions",
+        description: "Compare two versions of a crate",
+        inputSchema: {
+          $schema: "http://json-schema.org/draft-07/schema#",
+          type: "object",
+          properties: {
+            crate: {
+              type: "string",
+              description: "The crate name"
+            },
+            version1: {
+              type: "string",
+              description: "First version to compare"
+            },
+            version2: {
+              type: "string",
+              description: "Second version to compare"
+            }
+          },
+          required: ["crate", "version1", "version2"],
+          additionalProperties: false
+        }
       }
     ]
   };
@@ -207,6 +514,186 @@ server.setRequestHandler(CallToolRequestSchema, async (request) => {
             {
               type: "text",
               text: JSON.stringify(readme, null, 2)
+            }
+          ]
+        };
+      }
+      case "docs_rs_list_versions": {
+        const { crate: crateName } = args;
+        const versions = await listCrateVersions(crateName);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(versions, null, 2)
+            }
+          ]
+        };
+      }
+      case "docs_rs_get_reverse_deps": {
+        const { crate: crateName } = args;
+        const deps = await getReverseDependencies(crateName);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(deps, null, 2)
+            }
+          ]
+        };
+      }
+      case "docs_rs_get_downloads": {
+        const { crate: crateName } = args;
+        const downloads = await getCrateDownloads(crateName);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(downloads, null, 2)
+            }
+          ]
+        };
+      }
+      case "docs_rs_search_items": {
+        const { crate: crateName, version, item_type } = args;
+        const items = await searchCrateItems(crateName, version || "latest", item_type);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(items, null, 2)
+            }
+          ]
+        };
+      }
+      case "docs_rs_get_source_link": {
+        const { crate: crateName, version } = args;
+        const source = await getCrateSourceLink(crateName, version || "latest");
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(source, null, 2)
+            }
+          ]
+        };
+      }
+      case "docs_rs_get_features": {
+        const { crate: crateName, version } = args;
+        const features = await getCrateFeatures(crateName, version || "latest");
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(features, null, 2)
+            }
+          ]
+        };
+      }
+      case "docs_rs_get_dependencies": {
+        const { crate: crateName, version } = args;
+        const deps = await getCrateDependencies(crateName, version || "latest");
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(deps, null, 2)
+            }
+          ]
+        };
+      }
+      case "docs_rs_get_owners": {
+        const { crate: crateName } = args;
+        const owners = await getCrateOwners(crateName);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(owners, null, 2)
+            }
+          ]
+        };
+      }
+      case "docs_rs_search_rustdoc": {
+        const { query, limit } = args;
+        const results = await searchRustDoc(query, limit);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(results, null, 2)
+            }
+          ]
+        };
+      }
+      case "docs_rs_get_releases": {
+        const { crate: crateName, limit } = args;
+        const releases = await getCrateReleases(crateName, limit || 20);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(releases, null, 2)
+            }
+          ]
+        };
+      }
+      case "docs_rs_get_trait_impls": {
+        const { crate: crateName, trait_name, version } = args;
+        const impls = await getTraitImplementations(crateName, trait_name, version || "latest");
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(impls, null, 2)
+            }
+          ]
+        };
+      }
+      case "docs_rs_get_source_code": {
+        const { crate: crateName, version, path } = args;
+        const source = await getItemSourceCode(crateName, version || "latest", path);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(source, null, 2)
+            }
+          ]
+        };
+      }
+      case "docs_rs_get_keywords": {
+        const { crate: crateName } = args;
+        const keywords = await getCrateKeywords(crateName);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(keywords, null, 2)
+            }
+          ]
+        };
+      }
+      case "docs_rs_get_license": {
+        const { crate: crateName } = args;
+        const license = await getCrateLicense(crateName);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(license, null, 2)
+            }
+          ]
+        };
+      }
+      case "docs_rs_compare_versions": {
+        const { crate: crateName, version1, version2 } = args;
+        const comparison = await compareCrateVersions(crateName, version1, version2);
+        return {
+          content: [
+            {
+              type: "text",
+              text: JSON.stringify(comparison, null, 2)
             }
           ]
         };
